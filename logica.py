@@ -16,7 +16,7 @@ Modo de uso:
 
 
 # You can use "from logica import *"
-__all__ = ["Boolean", "Verdadeiro", "Falso"]
+__all__ = ["Boolean", "Verdadeiro", "Falso", "Formula"]
 
 
 
@@ -96,3 +96,67 @@ class Boolean(int):
 # Bootstrapping the two values:
 Verdadeiro = int.__new__(Boolean, 1)
 Falso      = int.__new__(Boolean, 0)
+
+
+
+
+
+
+class Formula(object):
+    """Classe que analisa uma fórmula (ou expressão) e permite:
+    * Gerar a tabela verdade.
+    * Comparar duas fórmulas quanto à equivalência.
+    * Dizer se é tautologia ou contradição.
+    """
+
+    def __init__(self, expr, nvars):
+        """Formula(expr, nvars)
+
+        expr  -> Função (normalmente um lambda)
+        nvars -> Quantidade de variáveis dessa função
+        """
+        self.expr = expr
+        self.nvars = nvars
+        self.tbverdade = []
+
+        # Just to prevent out-of-memory.
+        # This limit can be raised if needed.
+        assert nvars < 10
+
+        self.calcular_tabela_verdade()
+
+    def __eq__(self, other):
+        """Compara a tabela verdade de duas fórmulas."""
+        return self.tbverdade == other.tbverdade
+
+    def calcular_tabela_verdade(self):
+        def recursivo(self, valores):
+            assert len(valores) <= self.nvars
+
+            if len(valores) == self.nvars:
+                #self.tbverdade.append((valores, self.expr(*valores)))
+                self.tbverdade.append(self.expr(*valores))
+            else:
+                recursivo(self,valores + [Verdadeiro])
+                recursivo(self,valores + [Falso])
+
+        self.tbverdade = []
+        recursivo(self, [])
+
+    def tautologia(self):
+        """Retorna Verdadeiro se a fórmula é uma tautologia.
+        
+        Uma fórmula é tautologia se, e somente se, a tabela verdade é sempre verdadeira."""
+        if (self.tbverdade.count(Falso) + self.tbverdade.count(False)) == 0:
+            return Verdadeiro
+        else:
+            return Falso
+
+    def contradicao(self):
+        """Retorna Verdadeiro se a fórmula é uma contradição.
+        
+        Uma fórmula é contradição se, e somente se, a tabela verdade é sempre falsa."""
+        if (self.tbverdade.count(Verdadeiro) + self.tbverdade.count(True)) == 0:
+            return Verdadeiro
+        else:
+            return Falso
