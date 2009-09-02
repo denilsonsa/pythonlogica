@@ -119,15 +119,15 @@ class Formula(object):
         self.nvars = nvars
         self.tbverdade = []
 
-        # Just to prevent out-of-memory.
+        # Just to prevent out-of-memory and too long operations.
         # This limit can be raised if needed.
-        assert nvars < 10
+        assert nvars < 16
 
         self.calcular_tabela_verdade()
 
     def __eq__(self, other):
         """Compara a tabela verdade de duas fórmulas."""
-        return self.tbverdade == other.tbverdade
+        return Boolean(self.tbverdade == other.tbverdade)
 
     def calcular_tabela_verdade(self):
         def recursivo(self, valores):
@@ -141,7 +141,8 @@ class Formula(object):
                 recursivo(self,valores + [Falso])
 
         self.tbverdade = []
-        recursivo(self, [])
+        if self.nvars > 0:
+            recursivo(self, [])
 
     def tautologia(self):
         """Retorna Verdadeiro se a fórmula é uma tautologia.
