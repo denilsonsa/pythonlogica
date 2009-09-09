@@ -357,6 +357,17 @@ class ExpressaoSimbolo(Expressao):
     def __str__(self):
         return str(self.name)
 
+    def __eq__(self, other):
+        """Compara se dois símbolos têm o mesmo nome."""
+        return (
+                type(self) == type(other)
+            ) and (
+                self.children == other.children
+            ) and (
+                self.name == other.name
+            )
+
+
 
 class ExpressaoNot(Expressao):
     """Representa o operador NOT"""
