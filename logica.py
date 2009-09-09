@@ -236,32 +236,24 @@ class Expressao(object):
         """
         return ExpressaoOr(ExpressaoNot(self), other)
 
-    def normalizar(self):
-        """Normaliza a expressão, transformando uma sequência de expressões
-        binárias iguais em um única expressão n-ária. Também remove duplas
-        negações.
+    def __eq__(self, other):
+        raise NotImplementedError
 
-        Exemplo:
-          (A & (B & (C & D)))  ==>  (A & B & C & D)
-          (~ (~ A)) ==> A
+    def __ne__(self, other):
+        return not (self == other)
+
+    def remover_associativas(self):
+        """Remove as operações associativas, transformando uma sequência de
+        expressões binárias iguais em um única expressão n-ária.
+
+        (A & (B & (C & D)))  ==>  (A & B & C & D)
         """
-
         newchildren = []
         for e in self.children:
-            e.normalizar()
-
-            # child is NOT
-            if e.is_not:
-                f = e.children[0]  # there should be only one child
-                if f.is_not:
-                    # Removing (~ (~ A))
-                    newchildren.append(f.children[0])
-                else:
-                    # Doing nothing
-                    newchildren.append(e)
+            e.remover_associativas()
 
             # self and child are both AND or OR
-            elif (e.is_and or e.is_or) and (type(e) == type(self)):
+            if (e.is_and or e.is_or) and (type(e) == type(self)):
                 # (A & (B & C)) ==>  (A & B & C)
                 # (A | (B | C)) ==>  (A | B | C)
                 newchildren.extend(e.children)
@@ -270,6 +262,31 @@ class Expressao(object):
                 # Doing nothing
                 newchildren.append(e)
         self.children = newchildren
+
+    def remover_duplas_negacoes(self, recursive=True):
+        """Remove duplas negações.
+
+        (~ (~ A)) ==> A
+        """
+        newchildren = []
+        for e in self.children:
+            # child is NOT
+            if e.is_not:
+                f = e.children[0]  # there should be only one child
+                # grandchild is also NOT
+                if f.is_not:
+                    # Removing (~ (~ A))
+                    newchildren.append(f.children[0])
+                else:
+                    # Doing nothing
+                    newchildren.append(e)
+            else:
+                newchildren.append(e)
+        self.children = newchildren
+
+        if recursive:
+            for e in self.children:
+                e.remover_duplas_negacoes()
 
     def interiorizar_negacao(self):
         """Interioriza a negação, aplicando as leis de De Morgan.
@@ -314,6 +331,7 @@ class ExpressaoSimbolo(Expressao):
 
     def __init__(self, name=""):
         #super(ExpressaoSimbolo, self).__init__()
+        self.children = []
         self.name = name
 
     def __repr__(self):
@@ -321,13 +339,6 @@ class ExpressaoSimbolo(Expressao):
 
     def __str__(self):
         return str(self.name)
-
-
-    def normalizar(self):
-        pass
-
-    def interiorizar_negacao(self):
-        pass
 
 
 class ExpressaoNot(Expressao):
