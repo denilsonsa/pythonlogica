@@ -237,7 +237,22 @@ class Expressao(object):
         return ExpressaoOr(ExpressaoNot(self), other)
 
     def __eq__(self, other):
-        raise NotImplementedError
+        """Compara se duas expressões são iguais.
+
+        A comparação é feita comparando a árvore de ambas as expressões, então
+        na verdade isto apenas compara se as expressões são *estruturalmente*
+        iguais.
+
+        Note que:
+          (A & B) == (A & B)
+        porém:
+          (A & B) == (B & A)
+        """
+        return (
+                type(self) == type(other)
+            ) and (
+                self.children == other.children
+            )
 
     def __ne__(self, other):
         return not (self == other)
@@ -317,6 +332,8 @@ class Expressao(object):
             else:
                 newchildren.append(e)
         self.children = newchildren
+
+        self.remover_duplas_negacoes(recursive=False)
 
         for e in self.children:
             e.interiorizar_negacao()
