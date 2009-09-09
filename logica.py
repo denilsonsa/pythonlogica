@@ -249,17 +249,60 @@ class Expressao(object):
         newchildren = []
         for e in self.children:
             e.normalizar()
+
+            # child is NOT
             if e.is_not:
                 f = e.children[0]  # there should be only one child
                 if f.is_not:
+                    # Removing (~ (~ A))
                     newchildren.append(f.children[0])
                 else:
+                    # Doing nothing
                     newchildren.append(e)
+
+            # self and child are both AND or OR
             elif (e.is_and or e.is_or) and (type(e) == type(self)):
+                # (A & (B & C)) ==>  (A & B & C)
+                # (A | (B | C)) ==>  (A | B | C)
                 newchildren.extend(e.children)
+
+            else:
+                # Doing nothing
+                newchildren.append(e)
+        self.children = newchildren
+
+    def interiorizar_negacao(self):
+        """Interioriza a negação, aplicando as leis de De Morgan.
+
+        (~(A & B)) ==> ((~ A) | (~ B))
+        (~(A | B)) ==> ((~ A) & (~ B))
+        """
+        newchildren = []
+        for e in self.children:
+            # child is NOT
+            if e.is_not:
+                f = e.children[0]  # there should be only one child
+                # grandchild is AND or OR
+                if f.is_and or f.is_or:
+                    if f.is_and:
+                        new_op = ExpressaoOr
+                    elif f.is_or:
+                        new_op = ExpressaoAnd
+                    newchildren.append(
+                        new_op(
+                            *[ExpressaoNot(x) for x in f.children]
+                        )
+                    )
+                # grandchild is something else
+                else:
+                    newchildren.append(e)
+
             else:
                 newchildren.append(e)
         self.children = newchildren
+
+        for e in self.children:
+            e.interiorizar_negacao()
 
 
 
@@ -281,6 +324,9 @@ class ExpressaoSimbolo(Expressao):
 
 
     def normalizar(self):
+        pass
+
+    def interiorizar_negacao(self):
         pass
 
 
