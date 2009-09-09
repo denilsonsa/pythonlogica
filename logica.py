@@ -246,20 +246,20 @@ class Expressao(object):
           (~ (~ A)) ==> A
         """
 
-        for i, e in enumerate(self.children):
+        newchildren = []
+        for e in self.children:
             e.normalizar()
             if e.is_not:
                 f = e.children[0]  # there should be only one child
                 if f.is_not:
-                    self.children[i] = f.children[0]
-            elif e.is_and or e.is_or:
-                newchildren = []
-                for f in e.children:
-                    if type(f) == type(e):
-                        newchildren.extend(f.children)
-                    else:
-                        newchildren.append(f)
-                e.children = newchildren
+                    newchildren.append(f.children[0])
+                else:
+                    newchildren.append(e)
+            elif (e.is_and or e.is_or) and (type(e) == type(self)):
+                newchildren.extend(e.children)
+            else:
+                newchildren.append(e)
+        self.children = newchildren
 
 
 
