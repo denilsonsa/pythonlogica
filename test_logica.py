@@ -17,6 +17,18 @@ class TestarExpressoes(unittest.TestCase):
         for i in string.uppercase:
             del globals()[i]
 
+    def test_simbolos_iguais(self):
+        self.assertEqual(
+            ExpressaoSimbolo("x"),
+            ExpressaoSimbolo("x")
+        )
+
+    def test_simbolos_diferentes(self):
+        self.assertNotEqual(
+            ExpressaoSimbolo("x"),
+            ExpressaoSimbolo("y")
+        )
+
     def test_operador_parentese(self):
         e = Expressao(A)
         self.assertEqual(
@@ -131,6 +143,21 @@ class TestarExpressoes(unittest.TestCase):
             ExpressaoOr(A, B, C, D),
             e
         )
+
+    def test_listar_simbolos_1(self):
+        e = A & B & C
+        self.assertEqual(
+            set(['A', 'B', 'C']),
+            e.simbolos()
+        )
+
+    def test_listar_simbolos_2(self):
+        e = (A & B & C) | (~A & ~B & ~C) | (B & D)
+        self.assertEqual(
+            set(['A', 'B', 'C', 'D']),
+            e.simbolos()
+        )
+
 
 
 if __name__ == '__main__':

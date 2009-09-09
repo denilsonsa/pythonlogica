@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vi:ts=4 sw=4 et
+# vi:ts=4 sw=4 et foldmethod=indent
 
 
 """
@@ -180,6 +180,7 @@ class Formula(object):
 
 
 
+
 class Expressao(object):
     """Classe abstrata que representa uma expressão lógica.
 
@@ -256,6 +257,13 @@ class Expressao(object):
 
     def __ne__(self, other):
         return not (self == other)
+
+    def simbolos(self):
+        """Retorna um set() com os símbolos proposicionais presentes nesta expressão."""
+        l = set()
+        for e in self.children:
+            l.update(e.simbolos())
+        return l
 
     def remover_associativas(self):
         """Remove as operações associativas, transformando uma sequência de
@@ -366,6 +374,9 @@ class ExpressaoSimbolo(Expressao):
             ) and (
                 self.name == other.name
             )
+
+    def simbolos(self):
+        return set(self.name)
 
 
 
