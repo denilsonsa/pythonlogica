@@ -16,14 +16,29 @@ Modo de uso:
 
 
 # You can use "from logica import *"
-__all__ = ["Boolean", "Verdadeiro", "Falso", "Formula"]
+__all__ = [
+    "Booleano",
+    "Verdadeiro",
+    "Falso",
+
+    "Formula",
+
+    "Expressao",
+    "ExpressaoSimbolo",
+    "ExpressaoNot",
+    "ExpressaoBinaria",
+    "ExpressaoAnd",
+    "ExpressaoOr",
+
+    "criar_simbolos_no_namespace",
+]
 
 
 
 # The following is based on:
 # http://www.python.org/dev/peps/pep-0285/
 
-class Boolean(int):
+class Booleano(int):
     """Tipo booleano com operadores redefinidos.
 
     Este tipo inclui um operador implica, usando a notação "A > B".
@@ -36,7 +51,7 @@ class Boolean(int):
     Não é recomendado usar o operador "not", prefira usar "~".
 
     Limitação: não é possível redefinir os operadores "and", "or" e "not".
-    Por este motivo, "not A" vai retornar um tipo "bool", e não o tipo Boolean().
+    Por este motivo, "not A" vai retornar um tipo "bool", e não o tipo Booleano().
     Por outro lado, "and" e "or" vão funcionar corretamente.
     """
 
@@ -58,22 +73,22 @@ class Boolean(int):
 
     def __and__(self, other):
         # This is the bitwise & operator
-        return self and Boolean(other)
+        return self and Booleano(other)
     __rand__ = __and__
 
     def __or__(self, other):
         # This is the bitwise | operator
-        return self or Boolean(other)
+        return self or Booleano(other)
     __ror__ = __or__
 
     def __xor__(self, other):
         # This is the bitwise ^ operator
-        return Boolean(int.__xor__(self, other))
+        return Booleano(int.__xor__(self, other))
     __rxor__ = __xor__
 
     def __neg__(self):
         # This is the numeric - operator
-        return Boolean(not self)
+        return Booleano(not self)
     # This is the bitwise ~ operator
     __invert__ = __neg__
 
@@ -94,8 +109,8 @@ class Boolean(int):
 
 
 # Bootstrapping the two values:
-Verdadeiro = int.__new__(Boolean, 1)
-Falso      = int.__new__(Boolean, 0)
+Verdadeiro = int.__new__(Booleano, 1)
+Falso      = int.__new__(Booleano, 0)
 
 
 
@@ -127,7 +142,7 @@ class Formula(object):
 
     def __eq__(self, other):
         """Compara a tabela verdade de duas fórmulas."""
-        return Boolean(self.tbverdade == other.tbverdade)
+        return Booleano(self.tbverdade == other.tbverdade)
 
     def calcular_tabela_verdade(self):
         def recursivo(self, valores):
@@ -161,3 +176,158 @@ class Formula(object):
             return Verdadeiro
         else:
             return Falso
+
+
+
+
+class Expressao(object):
+    """Classe abstrata que representa uma expressão lógica.
+
+    A idéia desta classe e suas derivadas é permitir representar e manipular
+    uma expressão lógica.
+    """
+
+    symbol = False
+    is_not = False
+    is_and = False
+    is_or  = False
+    operator_str = " "
+
+    def __init__(self, child):
+        self.children = [child]
+
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, ', '.join(repr(x) for x in self.children))
+
+    def __str__(self):
+        return "(%s)" % (self.operator_str.join(str(x) for x in self.children), )
+
+    def __and__(self, other):
+        # This is the bitwise & operator
+        return ExpressaoAnd(self, other)
+    __rand__ = __and__
+
+    def __or__(self, other):
+        # This is the bitwise | operator
+        return ExpressaoOr(self, other)
+    __ror__ = __or__
+
+    def __xor__(self, other):
+        # This is the bitwise ^ operator
+        return ExpressaoOr(
+            ExpressaoAnd(ExpressaoNot(self), other),
+            ExpressaoAnd(self, ExpressaoNot(other))
+        )
+    __rxor__ = __xor__
+
+    def __neg__(self):
+        # This is the numeric - operator
+        return ExpressaoNot(self)
+    # This is the bitwise ~ operator
+    __invert__ = __neg__
+
+    def __pos__(self):
+        # This is the numeric + operator
+        return self
+
+    def __gt__(self, other):
+        """A > B  significa  "A -> B", ou seja, "A implica em B"
+        É equivalente a (not A or B).
+        """
+        return ExpressaoOr(ExpressaoNot(self), other)
+
+    def normalizar(self):
+        """Normaliza a expressão, transformando uma sequência de expressões
+        binárias iguais em um única expressão n-ária. Também remove duplas
+        negações.
+
+        Exemplo:
+          (A & (B & (C & D)))  ==>  (A & B & C & D)
+          (~ (~ A)) ==> A
+        """
+
+        for i, e in enumerate(self.children):
+            e.normalizar()
+            if e.is_not:
+                f = e.children[0]  # there should be only one child
+                if f.is_not:
+                    self.children[i] = f.children[0]
+            elif e.is_and or e.is_or:
+                newchildren = []
+                for f in e.children:
+                    if type(f) == type(e):
+                        newchildren.extend(f.children)
+                    else:
+                        newchildren.append(f)
+                e.children = newchildren
+
+
+
+class ExpressaoSimbolo(Expressao):
+    """Representa um símbolo proposicional (um átomo)."""
+
+    symbol = True
+    operator_str = ""
+
+    def __init__(self, name=""):
+        #super(ExpressaoSimbolo, self).__init__()
+        self.name = name
+
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__, repr(self.name))
+
+    def __str__(self):
+        return str(self.name)
+
+
+    def normalizar(self):
+        pass
+
+
+class ExpressaoNot(Expressao):
+    """Representa o operador NOT"""
+
+    is_not = True
+    tperador_str = "~ "
+
+    def __init__(self, child):
+        #super(ExpressaoNot, self).__init__()
+        self.children = [child]
+
+    def __str__(self):
+        return "(~ %s)" % (str(self.children[0]), )
+
+
+class ExpressaoBinaria(Expressao):
+    """Representa um operador binário (ou n-ário)"""
+
+    def __init__(self, *children):
+        #super(ExpressaoBinaria, self).__init__()
+        self.children = list(children)
+
+
+class ExpressaoAnd(ExpressaoBinaria):
+    """Representa o operador AND"""
+
+    is_and = True
+    operator_str = " & "
+
+
+class ExpressaoOr(ExpressaoBinaria):
+    """Representa o operador OR"""
+
+    is_or = True
+    operator_str = " | "
+
+
+
+
+
+
+def criar_simbolos_no_namespace(simbolos, namespace):
+    """Exemplo de uso:
+    import string
+    criar_simbolos_no_namespace(string.uppercase, locals())
+    """
+    for simbolo in simbolos:
+        namespace[simbolo] = ExpressaoSimbolo(simbolo)
