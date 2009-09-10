@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vi:ts=4 sw=4 et foldmethod=indent
+# vi:ts=4 sw=4 et foldmethod=indent foldlevel=1
 
 
 """
@@ -348,6 +348,43 @@ class Expressao(object):
 
         for e in self.children:
             e.interiorizar_negacao()
+
+    def interiorizar_or(self):
+        """Interioriza o OR, aplicando:
+        (A | (B & C))  ==>  ((A | B) & (A | C))
+        """
+        newchildren = []
+        for e in self.children:
+            # child is OR
+            if e.is_or:
+                # Looking for AND inside OR
+                for f in e.children:
+                    # grandchild is AND
+                    if f.is_and:
+                        novo_and = []
+                        for filho_do_and in f.children:
+                            # Criando um OR para cada operando do AND
+                            novo_or = []
+                            for filho_do_or in e.children:
+                                if filho_do_or == f:
+                                    novo_or.append(filho_do_and)
+                                else:
+                                    novo_or.append(filho_do_or)
+                            novo_and.append(ExpressaoOr(*novo_or))
+                        # Finally, replacing old OR by the new AND
+                        newchildren.append(ExpressaoAnd(*novo_and))
+                        break
+                # OR has no AND inside it
+                else:  # for-else
+                    newchildren.append(e)
+            # child is something else
+            else:
+                newchildren.append(e)
+
+        self.children = newchildren
+        #for e in self.children:
+        #    self.interiorizar_or()
+
 
 
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vi:ts=4 sw=4 et foldmethod=indent
+# vi:ts=4 sw=4 et foldmethod=indent foldlevel=1
 
 import unittest
 import string
@@ -16,6 +16,9 @@ class TestarExpressoes(unittest.TestCase):
     def tearDown(self):
         for i in string.uppercase:
             del globals()[i]
+
+    #################################################################
+    # Testes de operadores
 
     def test_simbolos_iguais(self):
         self.assertEqual(
@@ -87,6 +90,14 @@ class TestarExpressoes(unittest.TestCase):
             ExpressaoOr(ExpressaoNot(ExpressaoNot(A)), ExpressaoNot(B)),
             ~A > ~B
         )
+
+    #################################################################
+    # Testes de manipulações
+    #
+    # Muitos dos testes abaixos exigem que a expressão seja
+    # encapsulada num parêntese, usando Expressao(). Isto é
+    # necessário porque a maioria das manipulações consegue
+    # operar apenas nos filhos.
 
     def test_remover_dupla_negacao(self):
         e = Expressao(~ ~ A)
@@ -170,6 +181,35 @@ class TestarExpressoes(unittest.TestCase):
             e
         )
 
+    def test_interiorizar_or_1(self):
+        e = Expressao(A | (B & C))
+        r = Expressao( (A | B) & (A | C) )
+        e.remover_associativas()
+        r.remover_associativas()
+        e.interiorizar_or()
+        self.assertEqual(e, r)
+
+    def test_interiorizar_or_2(self):
+        e = Expressao(A | (X & Y & Z))
+        r = Expressao( (A | X) & (A | Y) & (A | Z) )
+        e.remover_associativas()
+        r.remover_associativas()
+        e.interiorizar_or()
+        self.assertEqual(e, r)
+
+    def test_interiorizar_or_3(self):
+        e = Expressao(A | B | (X & Y & Z) | C)
+        r = Expressao( (A | B | X | C) & (A | B | Y | C) & (A | B | Z | C) )
+        e.remover_associativas()
+        r.remover_associativas()
+        e.interiorizar_or()
+        self.assertEqual(e, r)
+
+
+
+    #################################################################
+    # Testes de lista de símbolos
+
     def test_listar_simbolos_1(self):
         e = A & B & C
         self.assertEqual(
@@ -183,6 +223,9 @@ class TestarExpressoes(unittest.TestCase):
             set(['A', 'B', 'C', 'D']),
             e.simbolos()
         )
+
+    #################################################################
+    # Testes de eval()
 
     def test_eval_simbolo(self):
         e = A
