@@ -128,6 +128,32 @@ class TestarExpressoes(unittest.TestCase):
             e.children[0]
         )
 
+    def test_demorgan_remover_dupla_negacao_1(self):
+        e = Expressao(~(~ ~ A & ~ ~ (~B & C)))
+        e.interiorizar_negacao()
+        self.assertEqual(
+            Expressao(~ A | (B | ~ C)),
+            e
+        )
+
+    def test_demorgan_remover_dupla_negacao_2(self):
+        """Ao executar .interiorizar_negacao(), a remoção automática da dupla negação deve acontecer de forma não recursiva."""
+        e = Expressao(~(~ ~ ~ A & ~ ~ (~B & C)))
+        e.interiorizar_negacao()
+        self.assertEqual(
+            Expressao(~ ~ A | (B | ~ C)),
+            e
+        )
+
+    def test_demorgan_remover_dupla_negacao_3(self):
+        """Ao executar .interiorizar_negacao(), a remoção automática da dupla negação deve acontecer de forma não recursiva."""
+        e = Expressao(~(~ A & ~ ~ B & ~ ~ ~ C) & ~ ~ D)
+        e.interiorizar_negacao()
+        self.assertEqual(
+            Expressao((A | ~ B | ~ ~ C) & ~ ~ D),
+            e
+        )
+
     def test_remover_associativas_and(self):
         e = A & B & C & D
         e.remover_associativas()
@@ -157,6 +183,86 @@ class TestarExpressoes(unittest.TestCase):
             set(['A', 'B', 'C', 'D']),
             e.simbolos()
         )
+
+    def test_eval_simbolo(self):
+        e = A
+        for valor in (True, False, Verdadeiro, Falso):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), valor)
+
+    def test_eval_parentese_1(self):
+        e = Expressao(A)
+        for valor in (True, False, Verdadeiro, Falso):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), valor)
+
+    def test_eval_parentese_2(self):
+        e = Expressao(Expressao(A))
+        for valor in (True, False, Verdadeiro, Falso):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), valor)
+
+    # TODO? Testar também com True/False, além de Verdadeiro/Falso
+    def test_eval_not_1(self):
+        e = ~A
+        for valor in (Verdadeiro, Falso):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), ~ valor)
+
+    def test_eval_not_2(self):
+        e = ~A
+        for valor, negacao in (
+            #(True, False),
+            #(False, True),
+            (Verdadeiro, Falso),
+            (Falso, Verdadeiro),
+        ):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), negacao)
+
+    def test_eval_parentese_not_parentese(self):
+        e = Expressao(ExpressaoNot(Expressao(ExpressaoSimbolo("A"))))
+        for valor, negacao in (
+            #(True, False),
+            #(False, True),
+            (Verdadeiro, Falso),
+            (Falso, Verdadeiro),
+        ):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), negacao)
+
+    def test_eval_and(self):
+        e = A & B
+        for valorA, valorB, resultado in (
+            (Verdadeiro, Verdadeiro, Verdadeiro),
+            (Verdadeiro, Falso     , Falso     ),
+            (Falso     , Verdadeiro, Falso     ),
+            (Falso     , Falso     , Falso     ),
+        ):
+            d = {"A": valorA, "B": valorB}
+            self.assertEqual(e.eval(d), resultado)
+
+    def test_eval_or(self):
+        e = A | B
+        for valorA, valorB, resultado in (
+            (Verdadeiro, Verdadeiro, Verdadeiro),
+            (Verdadeiro, Falso     , Verdadeiro),
+            (Falso     , Verdadeiro, Verdadeiro),
+            (Falso     , Falso     , Falso     ),
+        ):
+            d = {"A": valorA, "B": valorB}
+            self.assertEqual(e.eval(d), resultado)
+
+    def test_eval_implica(self):
+        e = A > B
+        for valorA, valorB, resultado in (
+            (Verdadeiro, Verdadeiro, Verdadeiro),
+            (Verdadeiro, Falso     , Falso     ),
+            (Falso     , Verdadeiro, Verdadeiro),
+            (Falso     , Falso     , Verdadeiro),
+        ):
+            d = {"A": valorA, "B": valorB}
+            self.assertEqual(e.eval(d), resultado)
 
 
 

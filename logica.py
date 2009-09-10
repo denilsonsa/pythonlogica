@@ -265,6 +265,10 @@ class Expressao(object):
             l.update(e.simbolos())
         return l
 
+    def eval(self, valores):
+        """Avalia a expressão, retornando o valor da expressão dados os valores dos símbolos passados."""
+        return self.children[0].eval(valores)
+
     def remover_associativas(self):
         """Remove as operações associativas, transformando uma sequência de
         expressões binárias iguais em um única expressão n-ária.
@@ -333,6 +337,7 @@ class Expressao(object):
                             *[ExpressaoNot(x) for x in f.children]
                         )
                     )
+                    newchildren[-1].remover_duplas_negacoes(recursive=False)
                 # grandchild is something else
                 else:
                     newchildren.append(e)
@@ -340,8 +345,6 @@ class Expressao(object):
             else:
                 newchildren.append(e)
         self.children = newchildren
-
-        self.remover_duplas_negacoes(recursive=False)
 
         for e in self.children:
             e.interiorizar_negacao()
@@ -378,6 +381,9 @@ class ExpressaoSimbolo(Expressao):
     def simbolos(self):
         return set(self.name)
 
+    def eval(self, valores):
+        return valores[self.name]
+
 
 
 class ExpressaoNot(Expressao):
@@ -392,6 +398,9 @@ class ExpressaoNot(Expressao):
 
     def __str__(self):
         return "(~ %s)" % (str(self.children[0]), )
+
+    def eval(self, valores):
+        return ~ self.children[0].eval(valores)
 
 
 class ExpressaoBinaria(Expressao):
@@ -408,12 +417,18 @@ class ExpressaoAnd(ExpressaoBinaria):
     is_and = True
     operator_str = " & "
 
+    def eval(self, valores):
+        return reduce(lambda x,y: x.eval(valores) & y.eval(valores), self.children)
+
 
 class ExpressaoOr(ExpressaoBinaria):
     """Representa o operador OR"""
 
     is_or = True
     operator_str = " | "
+
+    def eval(self, valores):
+        return reduce(lambda x,y: x.eval(valores) | y.eval(valores), self.children)
 
 
 
