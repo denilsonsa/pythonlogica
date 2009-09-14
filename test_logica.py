@@ -4,6 +4,7 @@
 
 import unittest
 import string
+import sys
 from logica import *
 
 
@@ -205,6 +206,12 @@ class TestarExpressoes(unittest.TestCase):
         e.interiorizar_or()
         self.assertEqual(e, r)
 
+# TODO:
+#  Testar: (A & ~ ~ (B & C)) ==> (A & B & C)
+#  Testar: (A & B) | (C & D) ==> interiorizar_or
+#  Testar: (A | B | (X & (J | K) & Y) | C ) ==> interiorizar_or
+#  Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
+
 
 
     #################################################################
@@ -229,23 +236,22 @@ class TestarExpressoes(unittest.TestCase):
 
     def test_eval_simbolo(self):
         e = A
-        for valor in (True, False, Verdadeiro, Falso):
+        for valor in (Verdadeiro, Falso):
             d = {"A": valor}
             self.assertEqual(e.eval(d), valor)
 
     def test_eval_parentese_1(self):
         e = Expressao(A)
-        for valor in (True, False, Verdadeiro, Falso):
+        for valor in (Verdadeiro, Falso):
             d = {"A": valor}
             self.assertEqual(e.eval(d), valor)
 
     def test_eval_parentese_2(self):
         e = Expressao(Expressao(A))
-        for valor in (True, False, Verdadeiro, Falso):
+        for valor in (Verdadeiro, Falso):
             d = {"A": valor}
             self.assertEqual(e.eval(d), valor)
 
-    # TODO? Testar também com True/False, além de Verdadeiro/Falso
     def test_eval_not_1(self):
         e = ~A
         for valor in (Verdadeiro, Falso):
@@ -255,8 +261,6 @@ class TestarExpressoes(unittest.TestCase):
     def test_eval_not_2(self):
         e = ~A
         for valor, negacao in (
-            #(True, False),
-            #(False, True),
             (Verdadeiro, Falso),
             (Falso, Verdadeiro),
         ):
@@ -266,8 +270,6 @@ class TestarExpressoes(unittest.TestCase):
     def test_eval_parentese_not_parentese(self):
         e = Expressao(ExpressaoNot(Expressao(ExpressaoSimbolo("A"))))
         for valor, negacao in (
-            #(True, False),
-            #(False, True),
             (Verdadeiro, Falso),
             (Falso, Verdadeiro),
         ):
@@ -309,5 +311,85 @@ class TestarExpressoes(unittest.TestCase):
 
 
 
+
+
+class TestarExpressoesTrueFalse(unittest.TestCase):
+    """Esta classe contém apenas testes não críticos"""
+
+    def setUp(self):
+        # Ugly... Writing to globals()...
+        # But it is damn handy! :)
+        criar_simbolos_no_namespace(string.uppercase, globals())
+
+    def tearDown(self):
+        for i in string.uppercase:
+            del globals()[i]
+
+    def test_eval_simbolo(self):
+        e = A
+        for valor in (True, False):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), valor)
+
+    def test_eval_parentese_1(self):
+        e = Expressao(A)
+        for valor in (True, False):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), valor)
+
+    def test_eval_parentese_2(self):
+        e = Expressao(Expressao(A))
+        for valor in (True, False):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), valor)
+
+    def test_eval_not(self):
+        e = ~A
+        for valor, negacao in (
+            (True, False),
+            (False, True),
+        ):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), negacao)
+
+    def test_eval_parentese_not_parentese(self):
+        e = Expressao(ExpressaoNot(Expressao(ExpressaoSimbolo("A"))))
+        for valor, negacao in (
+            (True, False),
+            (False, True),
+        ):
+            d = {"A": valor}
+            self.assertEqual(e.eval(d), negacao)
+            d = {"A": valorA, "B": valorB}
+            self.assertEqual(e.eval(d), resultado)
+
+
+
+class _TerseTextTestResult(unittest._TextTestResult):
+    def printErrorList(self, flavour, errors):
+        for test, err in errors:
+            #self.stream.writeln(self.separator1)
+            self.stream.writeln("%s: %s" % (flavour,self.getDescription(test)))
+            #self.stream.writeln(self.separator2)
+            #self.stream.writeln("%s" % err)
+
+
+class TerseTextTestRunner(unittest.TextTestRunner):
+    def _makeResult(self):
+        return _TerseTextTestResult(self.stream, self.descriptions, self.verbosity)
+
+
+
 if __name__ == '__main__':
-    unittest.main()
+    #unittest.main()
+
+    sys.stderr.write("Running non-critical tests:\n")
+    non_critical_suite = unittest.TestLoader().loadTestsFromTestCase(TestarExpressoesTrueFalse)
+    TerseTextTestRunner(verbosity=1).run(non_critical_suite)
+    #unittest.TextTestRunner(verbosity=1).run(non_critical_suite)
+
+    sys.stderr.write("\n")
+
+    sys.stderr.write("Running CRITICAL tests:\n")
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestarExpressoes)
+    unittest.TextTestRunner(verbosity=1).run(suite)
