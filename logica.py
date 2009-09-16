@@ -269,15 +269,19 @@ class Expressao(object):
         """Avalia a expressão, retornando o valor da expressão dados os valores dos símbolos passados."""
         return self.children[0].eval(valores)
 
-    def remover_associativas(self):
+    def remover_associativas(self, recursive=True):
         """Remove as operações associativas, transformando uma sequência de
         expressões binárias iguais em um única expressão n-ária.
 
         (A & (B & (C & D)))  ==>  (A & B & C & D)
+
+        Este método opera a partir de um objeto AND/OR.
+        ExpressaoAnd(A, ExpressaoAnd(B, C)) ==> (A & B & C)
         """
         newchildren = []
         for e in self.children:
-            e.remover_associativas()
+            if recursive:
+                e.remover_associativas(recursive=recursive)
 
             # self and child are both AND or OR
             if (e.is_and or e.is_or) and (type(e) == type(self)):
@@ -290,36 +294,57 @@ class Expressao(object):
                 newchildren.append(e)
         self.children = newchildren
 
-    def remover_duplas_negacoes(self, recursive=True):
+    def remover_duplas_negacoes(self, recursive=True, auto_remover_associativas=False):
         """Remove duplas negações.
 
         (~ (~ A)) ==> A
+
+        Este método opera a partir de um objeto pai em relação ao NOT.
+        Expressao(ExpressaoNot(ExpressaoNot(A)) ==> Expressao(A)
+
+        Este método pode opcionalmente chamar .remover_associativas(),
+        dependendo do parâmetro auto_remover_associativas:
+          auto_remover_associativas = False:
+            (A & ~ ~ (B & C)) ==> (A & (B & C))
+          auto_remover_associativas = True:
+            (A & ~ ~ (B & C)) ==> (A & B & C)
         """
+        modified = False
         newchildren = []
         for e in self.children:
             # child is NOT
-            if e.is_not:
+            while e.is_not:
                 f = e.children[0]  # there should be only one child
                 # grandchild is also NOT
                 if f.is_not:
                     # Removing (~ (~ A))
-                    newchildren.append(f.children[0])
+                    e = f.children[0]
+                    modified = True
+                # grandchild is something else
                 else:
                     # Doing nothing
-                    newchildren.append(e)
-            else:
-                newchildren.append(e)
+                    break
+            newchildren.append(e)
         self.children = newchildren
+
+        if modified and auto_remover_associativas:
+            self.remover_associativas(recursive=False)
 
         if recursive:
             for e in self.children:
-                e.remover_duplas_negacoes()
+                e.remover_duplas_negacoes(
+                    recursive=recursive,
+                    auto_remover_associativas=auto_remover_associativas
+                )
 
     def interiorizar_negacao(self):
         """Interioriza a negação, aplicando as leis de De Morgan.
 
         (~(A & B)) ==> ((~ A) | (~ B))
         (~(A | B)) ==> ((~ A) & (~ B))
+
+        Este método opera a partir de um objeto pai em relação ao NOT.
+        Expressao(~(A & B)) ==> Expressao((~A) | (~B))
         """
         newchildren = []
         for e in self.children:
@@ -352,6 +377,13 @@ class Expressao(object):
     def interiorizar_or(self):
         """Interioriza o OR, aplicando:
         (A | (B & C))  ==>  ((A | B) & (A | C))
+
+        Este método opera a partir de um objeto pai em relação ao OR.
+        Expressao(A | (B & C)) ==> Expressao((A | B) & (A | C))
+
+        Este método não remove associativas automaticamente, portanto,
+        é recomendável executar .remover_associativas() após chamar este
+        método.
         """
         newchildren = []
         for e in self.children:
@@ -382,8 +414,15 @@ class Expressao(object):
                 newchildren.append(e)
 
         self.children = newchildren
-        #for e in self.children:
-        #    self.interiorizar_or()
+        for e in self.children:
+            e.interiorizar_or()
+
+    def transformar_em_forma_normal_conjuntiva(self):
+        self.remover_duplas_negacoes()
+        self.remover_associativas()
+        self.interiorizar_negacao()
+        self.interiorizar_or()
+        self.remover_associativas()
 
 
 

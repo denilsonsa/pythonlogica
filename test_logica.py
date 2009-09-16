@@ -100,93 +100,131 @@ class TestarExpressoes(unittest.TestCase):
     # necessário porque a maioria das manipulações consegue
     # operar apenas nos filhos.
 
-    def test_remover_dupla_negacao(self):
+    def test_remover_dupla_negacao_2(self):
         e = Expressao(~ ~ A)
+        r = Expressao(A)
         e.remover_duplas_negacoes()
-        self.assertEqual(
-            Expressao(A),
-            e
-        )
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_3(self):
+        e = Expressao(~ ~ ~ A)
+        r = Expressao(~ A)
+        e.remover_duplas_negacoes()
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_4(self):
+        e = Expressao(~ ~ ~ ~ A)
+        r = Expressao(A)
+        e.remover_duplas_negacoes()
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_5(self):
+        e = Expressao(~ ~ ~ ~ ~ A)
+        r = Expressao(~ A)
+        e.remover_duplas_negacoes()
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_6(self):
+        e = Expressao(~ ~ ~ ~ ~ ~ A)
+        r = Expressao(A)
+        e.remover_duplas_negacoes()
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_7(self):
+        e = Expressao(~ ~ ~ ~ ~ ~ ~ A)
+        r = Expressao(~ A)
+        e.remover_duplas_negacoes()
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_e_associativa_nao_1(self):
+        e = Expressao(A & ~ ~ (B & C))
+        r = Expressao(ExpressaoAnd(A, ExpressaoAnd(B, C)))
+        e.remover_duplas_negacoes(auto_remover_associativas=False)
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_e_associativa_sim_1(self):
+        e = Expressao(A & ~ ~ (B & C))
+        r = Expressao(ExpressaoAnd(A, B, C))
+        e.remover_duplas_negacoes(auto_remover_associativas=True)
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_e_associativa_nao_2(self):
+        e = Expressao(A | ~ ~ (B | C))
+        r = Expressao(ExpressaoOr(A, ExpressaoOr(B, C)))
+        e.remover_duplas_negacoes(auto_remover_associativas=False)
+        self.assertEqual(e, r)
+
+    def test_remover_dupla_negacao_e_associativa_sim_2(self):
+        e = Expressao(A | ~ ~ (B | C))
+        r = Expressao(ExpressaoOr(A, B, C))
+        e.remover_duplas_negacoes(auto_remover_associativas=True)
+        self.assertEqual(e, r)
 
     def test_demorgan_and(self):
-        e = Expressao(~ (A & B))
+        e = Expressao(~(A & B))
+        r = Expressao(ExpressaoOr(ExpressaoNot(A), ExpressaoNot(B)))
         e.interiorizar_negacao()
-        self.assertEqual(
-            ExpressaoOr(ExpressaoNot(A), ExpressaoNot(B)),
-            e.children[0]
-        )
+        self.assertEqual(e, r)
 
     def test_demorgan_or(self):
         e = Expressao(~ (A | B))
+        r = Expressao(ExpressaoAnd(ExpressaoNot(A), ExpressaoNot(B)))
         e.interiorizar_negacao()
-        self.assertEqual(
-            ExpressaoAnd(ExpressaoNot(A), ExpressaoNot(B)),
-            e.children[0]
-        )
+        self.assertEqual(e, r)
 
     def test_demorgan_and_remover_dupla_negacao(self):
         e = Expressao(~ (~A & ~B))
+        r = Expressao(ExpressaoOr(A, B))
         e.interiorizar_negacao()
-        self.assertEqual(
-            ExpressaoOr(A, B),
-            e.children[0]
-        )
+        self.assertEqual(e, r)
 
     def test_demorgan_or_remover_dupla_negacao(self):
         e = Expressao(~ (~A | ~B))
+        r = Expressao(ExpressaoAnd(A, B))
         e.interiorizar_negacao()
-        self.assertEqual(
-            ExpressaoAnd(A, B),
-            e.children[0]
-        )
+        self.assertEqual(e, r)
 
     def test_demorgan_remover_dupla_negacao_1(self):
         e = Expressao(~(~ ~ A & ~ ~ (~B & C)))
+        r = Expressao(~ A | (B | ~ C))
         e.interiorizar_negacao()
-        self.assertEqual(
-            Expressao(~ A | (B | ~ C)),
-            e
-        )
+        self.assertEqual(e, r)
 
     def test_demorgan_remover_dupla_negacao_2(self):
-        """Ao executar .interiorizar_negacao(), a remoção automática da dupla negação deve acontecer de forma não recursiva."""
         e = Expressao(~(~ ~ ~ A & ~ ~ (~B & C)))
+        r = Expressao(A | (B | ~ C))
         e.interiorizar_negacao()
-        self.assertEqual(
-            Expressao(~ ~ A | (B | ~ C)),
-            e
-        )
+        self.assertEqual(e, r)
 
     def test_demorgan_remover_dupla_negacao_3(self):
         """Ao executar .interiorizar_negacao(), a remoção automática da dupla negação deve acontecer de forma não recursiva."""
         e = Expressao(~(~ A & ~ ~ B & ~ ~ ~ C) & ~ ~ D)
+        r = Expressao((A | ~ B | C) & ~ ~ D)
         e.interiorizar_negacao()
-        self.assertEqual(
-            Expressao((A | ~ B | ~ ~ C) & ~ ~ D),
-            e
-        )
+        self.assertEqual(e, r)
+
+    def test_demorgan_remover_dupla_negacao_4(self):
+        """Ao executar .interiorizar_negacao(), a remoção automática da dupla negação deve acontecer de forma não recursiva."""
+        e = Expressao(~(~ A & ~ (B | ~ ~ ~ C)) )
+        r = Expressao(A | (B | ~ ~ ~ C) )
+        e.interiorizar_negacao()
+        self.assertEqual(e, r)
 
     def test_remover_associativas_and(self):
         e = A & B & C & D
+        r = ExpressaoAnd(A, B, C, D)
         e.remover_associativas()
-        self.assertEqual(
-            ExpressaoAnd(A, B, C, D),
-            e
-        )
+        self.assertEqual(e, r)
 
     def test_remover_associativas_or(self):
         e = A | B | C | D
+        r = ExpressaoOr(A, B, C, D)
         e.remover_associativas()
-        self.assertEqual(
-            ExpressaoOr(A, B, C, D),
-            e
-        )
+        self.assertEqual(e, r)
 
     def test_interiorizar_or_1(self):
         e = Expressao(A | (B & C))
         r = Expressao( (A | B) & (A | C) )
-        e.remover_associativas()
-        r.remover_associativas()
         e.interiorizar_or()
         self.assertEqual(e, r)
 
@@ -206,12 +244,42 @@ class TestarExpressoes(unittest.TestCase):
         e.interiorizar_or()
         self.assertEqual(e, r)
 
-# TODO:
-#  Testar: (A & ~ ~ (B & C)) ==> (A & B & C)
-#  Testar: (A & B) | (C & D) ==> interiorizar_or
-#  Testar: (A | B | (X & (J | K) & Y) | C ) ==> interiorizar_or
-#  Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
+    def test_interiorizar_or_4(self):
+        e = Expressao( (A & B) | (C & D) )
+        r1 = Expressao( ((A | C) & (A | D)) & ((B | C) & (B | D)) )
+        r2 = Expressao( ((A | C) & (A | D)) & ((B | C) & (B | D)) )
+        r2.remover_associativas()
+        e.interiorizar_or()
+        self.assertTrue(e == r1 or e == r2)
 
+    def test_interiorizar_or_5(self):
+        e = Expressao( (A & (X | Y)) | (C & (J | K)) )
+        r1 = Expressao(((A | C) & (A | (J | K))) & (((X | Y) | C) & ((X | Y) | (J | K))))
+        r2 = Expressao(((A | C) & (A | (J | K))) & (((X | Y) | C) & ((X | Y) | (J | K))))
+        r2.remover_associativas()
+        e.interiorizar_or()
+        self.assertTrue(e == r1 or e == r2)
+
+    def test_interiorizar_or_6(self):
+        e = Expressao( (A & B & C) | (D & E & F) )
+        r = Expressao( (A | D) & (A | E) & (A | F) & (B | D) & (B | E) & (B | F) & (C | D) & (C | E) & (C | F) )
+        r.remover_associativas()
+        e.interiorizar_or()
+        e.remover_associativas()
+        self.assertEqual(e, r)
+
+    def test_interiorizar_or_7(self):
+        e = Expressao( A | B | (X & (J | K) & Y) | C )
+        r1 = Expressao( ExpressaoAnd( ExpressaoOr(A, B, X, C), ExpressaoOr(A, B, (J | K), C), ExpressaoOr(A, B, Y, C) ) )
+        r2 = Expressao( ExpressaoAnd( ExpressaoOr(A, B, X, C), ExpressaoOr(A, B, (J | K), C), ExpressaoOr(A, B, Y, C) ) )
+        e.remover_associativas()
+        r2.remover_associativas()
+        e.interiorizar_or()
+        self.assertTrue(e == r1 or e == r2)
+
+# TODO:
+#  Possível expressão:
+#  Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
 
 
     #################################################################
@@ -383,12 +451,14 @@ class TerseTextTestRunner(unittest.TextTestRunner):
 if __name__ == '__main__':
     #unittest.main()
 
-    sys.stderr.write("Running non-critical tests:\n")
-    non_critical_suite = unittest.TestLoader().loadTestsFromTestCase(TestarExpressoesTrueFalse)
-    TerseTextTestRunner(verbosity=1).run(non_critical_suite)
-    #unittest.TextTestRunner(verbosity=1).run(non_critical_suite)
+    testar_bool = False
+    if testar_bool:
+        sys.stderr.write("Running non-critical tests:\n")
+        non_critical_suite = unittest.TestLoader().loadTestsFromTestCase(TestarExpressoesTrueFalse)
+        TerseTextTestRunner(verbosity=1).run(non_critical_suite)
+        #unittest.TextTestRunner(verbosity=1).run(non_critical_suite)
 
-    sys.stderr.write("\n")
+        sys.stderr.write("\n")
 
     sys.stderr.write("Running CRITICAL tests:\n")
     suite = unittest.TestLoader().loadTestsFromTestCase(TestarExpressoes)
