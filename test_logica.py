@@ -277,9 +277,105 @@ class TestarExpressoes(unittest.TestCase):
         e.interiorizar_or()
         self.assertTrue(e == r1 or e == r2)
 
+    def test_transformar_em_forma_normal_conjuntiva(self):
+        expressoes = (
+            (
+                A ,
+                A
+            ),
+            (
+                ~ A ,
+                ~ A
+            ),
+            (
+                ~ ~ A ,
+                A
+            ),
+            (
+                ~ ~ A | B | C ,
+                A | B | C
+            ),
+            (
+                ~ ~ (A | B | C) ,
+                A | B | C
+            ),
+            (
+                A & B & C ,
+                A & B & C
+            ),
+            (
+                ~ (A | B | C) ,
+                ~A & ~B & ~C
+            ),
+            (
+                ~ (A & B & C) ,
+                ~A | ~B | ~C
+            ),
+            (
+                A & ~ ~ (B & C) ,
+                A & B & C
+            ),
+            (
+                A | ~ ~ (B | C) ,
+                A | B | C
+            ),
+            (
+                ~(~ ~ A & ~ ~ (~B & C)) ,
+                ~ A | B | ~ C
+            ),
+            (
+                ~(~ ~ ~ A & ~ ~ (~B & C)) ,
+                A | B | ~ C
+            ),
+            (
+                ~(~ A & ~ ~ B & ~ ~ ~ C) & ~ ~ D ,
+                (A | ~ B | C) & D
+            ),
+            (
+                ~(~ A & ~ (B | ~ ~ ~ C)) ,
+                A | B | ~ C
+            ),
+            (
+                (A | B) & (C | D) ,
+                (A | B) & (C | D)
+            ),
+            (
+                A | (X & Y & Z) ,
+                (A | X) & (A | Y) & (A | Z)
+            ),
+            (
+                A | B | (X & Y & Z) | C ,
+                (A | B | X | C) & (A | B | Y | C) & (A | B | Z | C)
+            ),
+            (
+                (A & B) | (C & D) ,
+                (A | C) & (A | D) & (B | C) & (B | D)
+            ),
+            (
+                (A & (X | Y)) | (C & (J | K)) ,
+                (A | C) & (A | J | K) & (X | Y | C) & (X | Y | J | K)
+            ),
+            (
+                (A & B & C) | (D & E & F) ,
+                (A | D) & (A | E) & (A | F) & (B | D) & (B | E) & (B | F) & (C | D) & (C | E) & (C | F) 
+            ),
+            (
+                A | B | (X & (J | K) & Y) | C ,
+                (A | B | X | C) & (A | B | J | K | C) & (A | B | Y | C)
+            ),
+        )
+        for antes, depois in expressoes:
+            e = Expressao(antes)
+            r = Expressao(depois)
+            r.remover_associativas()
+            e.transformar_em_forma_normal_conjuntiva()
+            self.assertEqual(e, r)
+
 # TODO:
-#  Possível expressão:
-#  Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
+#  * Testar transformar_em_forma_normal_conjuntiva() com expressões com
+#    operador implica.
+#  * Possível expressão para usar em testes:
+#    Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
 
 
     #################################################################
