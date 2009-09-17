@@ -46,50 +46,50 @@ class TestarExpressoes(unittest.TestCase):
 
     def test_operador_not(self):
         self.assertEqual(
-            ExpressaoNot(A),
-            ~ A
+            ~ A ,
+            ExpressaoNot(A)
         )
 
     def test_operador_not_duplicado(self):
         self.assertEqual(
-            ExpressaoNot(ExpressaoNot(A)),
-            ~ ~ A
+            ~ ~ A ,
+            ExpressaoNot(ExpressaoNot(A))
         )
 
     def test_operador_and(self):
         self.assertEqual(
-            ExpressaoAnd(A, B),
-            A & B
+            A & B ,
+            ExpressaoAnd(A, B)
         )
 
     def test_operador_or(self):
         self.assertEqual(
-            ExpressaoOr(A, B),
-            A | B
+            A | B ,
+            ExpressaoOr(A, B)
         )
 
     def test_operador_implica(self):
         self.assertEqual(
-            ExpressaoOr(ExpressaoNot(A), B),
-            A > B
+            A > B ,
+            ExpressaoOr(ExpressaoNot(A), B)
         )
 
     def test_precedencia_and_not(self):
         self.assertEqual(
-            ExpressaoAnd(ExpressaoNot(A), ExpressaoNot(B)),
-            ~A & ~B
+            ~A & ~B ,
+            ExpressaoAnd(ExpressaoNot(A), ExpressaoNot(B))
         )
 
     def test_precedencia_or_not(self):
         self.assertEqual(
-            ExpressaoOr(ExpressaoNot(A), ExpressaoNot(B)),
-            ~A | ~B
+            ~A | ~B ,
+            ExpressaoOr(ExpressaoNot(A), ExpressaoNot(B))
         )
 
     def test_precedencia_implica_not(self):
         self.assertEqual(
-            ExpressaoOr(ExpressaoNot(ExpressaoNot(A)), ExpressaoNot(B)),
-            ~A > ~B
+            ~A > ~B ,
+            ExpressaoOr(ExpressaoNot(ExpressaoNot(A)), ExpressaoNot(B))
         )
 
     #################################################################
@@ -100,41 +100,38 @@ class TestarExpressoes(unittest.TestCase):
     # necessário porque a maioria das manipulações consegue
     # operar apenas nos filhos.
 
-    def test_remover_dupla_negacao_2(self):
-        e = Expressao(~ ~ A)
-        r = Expressao(A)
-        e.remover_duplas_negacoes()
-        self.assertEqual(e, r)
-
-    def test_remover_dupla_negacao_3(self):
-        e = Expressao(~ ~ ~ A)
-        r = Expressao(~ A)
-        e.remover_duplas_negacoes()
-        self.assertEqual(e, r)
-
-    def test_remover_dupla_negacao_4(self):
-        e = Expressao(~ ~ ~ ~ A)
-        r = Expressao(A)
-        e.remover_duplas_negacoes()
-        self.assertEqual(e, r)
-
-    def test_remover_dupla_negacao_5(self):
-        e = Expressao(~ ~ ~ ~ ~ A)
-        r = Expressao(~ A)
-        e.remover_duplas_negacoes()
-        self.assertEqual(e, r)
-
-    def test_remover_dupla_negacao_6(self):
-        e = Expressao(~ ~ ~ ~ ~ ~ A)
-        r = Expressao(A)
-        e.remover_duplas_negacoes()
-        self.assertEqual(e, r)
-
-    def test_remover_dupla_negacao_7(self):
-        e = Expressao(~ ~ ~ ~ ~ ~ ~ A)
-        r = Expressao(~ A)
-        e.remover_duplas_negacoes()
-        self.assertEqual(e, r)
+    def test_remover_dupla_negacao(self):
+        expressoes = (
+            (
+                ~ A,
+                ~ A
+            ),
+            (
+                ~ ~ A,
+                A
+            ),
+            (
+                ~ ~ ~ A,
+                ~ A
+            ),
+            (
+                ~ ~ ~ ~ A,
+                A
+            ),
+            (
+                ~ ~ ~ ~ ~ A,
+                ~ A
+            ),
+            (
+                ~ ~ ~ ~ ~ ~ A,
+                A
+            ),
+        )
+        for antes, depois in expressoes:
+            e = Expressao(antes)
+            r = Expressao(depois)
+            e.remover_duplas_negacoes()
+            self.assertEqual(e, r)
 
     def test_remover_dupla_negacao_e_associativa_nao_1(self):
         e = Expressao(A & ~ ~ (B & C))
@@ -375,10 +372,41 @@ class TestarExpressoes(unittest.TestCase):
             e.transformar_em_forma_normal_conjuntiva()
             self.assertEqual(e, r)
 
+    def test_remover_operacoes_vazias(self):
+        expressoes = (
+            Expressao(ExpressaoAnd()),
+            Expressao(ExpressaoOr()),
+            Expressao(ExpressaoNot(ExpressaoAnd())),
+            Expressao(ExpressaoNot(ExpressaoOr())),
+            Expressao(ExpressaoNot(ExpressaoNot(ExpressaoAnd()))),
+            Expressao(ExpressaoNot(ExpressaoNot(ExpressaoOr()))),
+            Expressao(ExpressaoNot(ExpressaoNot(ExpressaoNot(ExpressaoAnd())))),
+            Expressao(ExpressaoNot(ExpressaoNot(ExpressaoNot(ExpressaoOr())))),
+            Expressao(ExpressaoNot(Expressao(ExpressaoNot(ExpressaoAnd())))),
+            Expressao(ExpressaoNot(Expressao(ExpressaoNot(ExpressaoOr())))),
+            Expressao(Expressao(Expressao(Expressao(ExpressaoAnd())))),
+            Expressao(Expressao(Expressao(Expressao(ExpressaoOr())))),
+            Expressao(ExpressaoAnd(ExpressaoAnd(),ExpressaoAnd())),
+            Expressao(ExpressaoOr(ExpressaoAnd(),ExpressaoAnd())),
+            Expressao(ExpressaoAnd(ExpressaoOr(),ExpressaoOr())),
+            Expressao(ExpressaoOr(ExpressaoOr(),ExpressaoOr())),
+            Expressao(ExpressaoAnd(ExpressaoAnd(),ExpressaoOr())),
+            Expressao(ExpressaoOr(ExpressaoAnd(),ExpressaoOr())),
+            Expressao(ExpressaoAnd(ExpressaoOr(),ExpressaoAnd())),
+            Expressao(ExpressaoOr(ExpressaoOr(),ExpressaoAnd())),
+            Expressao(ExpressaoAnd(ExpressaoAnd(Expressao(ExpressaoOr())),ExpressaoAnd(ExpressaoNot(ExpressaoOr())))),
+        )
+        for antes in expressoes:
+            e = antes
+            r = Expressao(A)
+            r.children = []
+            e.remover_operacoes_vazias()
+            self.assertEqual(e, r)
+
 # TODO:
 #  * Testar transformar_em_forma_normal_conjuntiva() com expressões com
 #    operador implica.
-#  * Criar funcao "remover tautologias" e "remover contradicoes" e "remover
+#  * Criar funcao "remover tautologias" e "remover contradicoes"
 #    operadores vazios" (ou seja, sem operandos)
 #  * Possível expressão para usar em testes:
 #    Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)

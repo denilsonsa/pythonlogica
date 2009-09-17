@@ -24,15 +24,20 @@ $ ipython
 "ExpressaoAnd(ExpressaoSimbolo('A'), ExpressaoSimbolo('B'))"
 >>> e.eval({'A': Verdadeiro, 'B': Falso})
 Falso
+>>> e = Expressao(e)
+>>> str(e)
+'((A & B))'
+>>> repr(e)
+"Expressao(ExpressaoAnd(ExpressaoSimbolo('A'), ExpressaoSimbolo('B')))"
 >>>
 >>> e = Expressao( (A & ~B) | (B & ~A) )
 >>> str(e)
-'(((A & (~ B)) | (B & (~ A))))'
+'(((A & ~ B) | (B & ~ A)))'
 >>> repr(e)
 "Expressao(ExpressaoOr(ExpressaoAnd(ExpressaoSimbolo('A'), ExpressaoNot(ExpressaoSimbolo('B'))), ExpressaoAnd(ExpressaoSimbolo('B'), ExpressaoNot(ExpressaoSimbolo('A')))))"
 >>> e.transformar_em_forma_normal_conjuntiva()
 >>> str(e)
-'(((A | B) & (A | (~ A)) & ((~ B) | B) & ((~ B) | (~ A))))'
+'(((A | B) & (A | ~ A) & (~ B | B) & (~ B | ~ A)))'
 """
 
 
@@ -212,7 +217,7 @@ class Expressao(object):
     uma expressão lógica.
     """
 
-    symbol = False
+    is_symbol = False
     is_not = False
     is_and = False
     is_or  = False
@@ -226,13 +231,6 @@ class Expressao(object):
 
     def __str__(self):
         return "(%s)" % (self.operator_str.join(str(x) for x in self.children), )
-
-    #TODO: criar uma função que retorna uma string, porém sem parênteses
-    # desnecessários, como ocorre com __str__()
-    # Exemplo:
-    #   ((A | B) & (A | ~ A) & (~ B | B) & (~ B | ~ A))
-    #   em vez disso:
-    #   ((A | B) & (A | (~ A)) & ((~ B) | B) & ((~ B) | (~ A)))
 
     def __and__(self, other):
         # This is the bitwise & operator
@@ -368,7 +366,7 @@ class Expressao(object):
                     auto_remover_associativas=auto_remover_associativas
                 )
 
-    def interiorizar_negacao(self):
+    def interiorizar_negacao(self, recursive=True):
         """Interioriza a negação, aplicando as leis de De Morgan.
 
         (~(A & B)) ==> ((~ A) | (~ B))
@@ -402,8 +400,9 @@ class Expressao(object):
                 newchildren.append(e)
         self.children = newchildren
 
-        for e in self.children:
-            e.interiorizar_negacao()
+        if recursive:
+            for e in self.children:
+                e.interiorizar_negacao(recursive=recursive)
 
     def interiorizar_or(self):
         """Interioriza o OR, aplicando:
@@ -455,10 +454,29 @@ class Expressao(object):
         self.interiorizar_or()
         self.remover_associativas()
 
-    # TODO: implementar isto
-    def remover_operacoes_vazias(self):
-        """TODO: MUST IMPLEMENT THIS"""
-        pass
+    def remover_operacoes_vazias(self, recursive=True):
+        """Remove as operações vazias, ou seja, operações/operadores que
+        possuam zero operandos.
+
+        Este método é útil para remover operações vazias em decorrência da
+        manipulação da árvore.
+
+        Este método opera a partir de um objeto pai em relação às operações
+        vazias.
+        Expressao(ExpressaoAnd()) ==> Expressao()
+        """
+        if recursive:
+            for e in self.children:
+                e.remover_operacoes_vazias(recursive=recursive)
+
+        newchildren = []
+        for e in self.children:
+            # Child is an operator with zero operands
+            if not e.is_symbol and len(e.children) == 0:
+                pass
+            else:
+                newchildren.append(e)
+        self.children = newchildren
 
 
 
@@ -466,7 +484,7 @@ class Expressao(object):
 class ExpressaoSimbolo(Expressao):
     """Representa um símbolo proposicional (um átomo)."""
 
-    symbol = True
+    is_symbol = True
     operator_str = ""
 
     def __init__(self, name=""):
@@ -509,7 +527,8 @@ class ExpressaoNot(Expressao):
         self.children = [child]
 
     def __str__(self):
-        return "(~ %s)" % (str(self.children[0]), )
+        return "~ %s" % (str(self.children[0]), )
+        #return "(~ %s)" % (str(self.children[0]), )
 
     def eval(self, valores):
         return ~ self.children[0].eval(valores)
