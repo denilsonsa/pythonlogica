@@ -93,6 +93,140 @@ class TestarExpressoes(unittest.TestCase):
         )
 
     #################################################################
+    # Testes de comparações
+
+    def test_comparar_ignorando_ordem(self):
+        expressoes = (
+            (
+                A,
+                A,
+                True,  # ==
+                True,  # .comparar_ignorando_ordem()
+            ),
+            (
+                A,
+                B,
+                False,
+                False,
+            ),
+            (
+                A,
+                ~ A,
+                False,
+                False,
+            ),
+            (
+                A & B,
+                A & B,
+                True,
+                True,
+            ),
+            (
+                A | B,
+                A | B,
+                True,
+                True,
+            ),
+            (
+                A & B,
+                B & A,
+                False,
+                True,
+            ),
+            (
+                A | B,
+                B | A,
+                False,
+                True,
+            ),
+            (
+                A & (C | B),
+                A & (B | C),
+                False,
+                True,
+            ),
+            (
+                (C | B) & A,
+                A & (B | C),
+                False,
+                True,
+            ),
+            (
+                (A & B) | (C & D),
+                (A & B) | (C & D),
+                True,
+                True,
+            ),
+            (
+                (B & A) | (D & C),
+                (A & B) | (C & D),
+                False,
+                True,
+            ),
+            (
+                (B & A) | (D & C),
+                (C & D) | (A & B),
+                False,
+                True,
+            ),
+            (
+                A > B,
+                ~ A | B,
+                True,
+                True,
+            ),
+            (
+                A > B,
+                B | ~ A,
+                False,
+                True,
+            ),
+            (
+                A & B & C & D,
+                A & B & C & D,
+                True,
+                True,
+            ),
+            (
+                A & B & C & D,
+                A & D & B & C,
+                False,
+                True,
+            ),
+            (
+                A & B & C & D,
+                D & C & B & A,
+                False,
+                True,
+            ),
+            (
+                A | B | C | D,
+                A | B | C | D,
+                True,
+                True,
+            ),
+            (
+                A | B | C | D,
+                A | D | B | C,
+                False,
+                True,
+            ),
+            (
+                A | B | C | D,
+                D | C | B | A,
+                False,
+                True,
+            ),
+        )
+        for e, f, equal, comparacao in expressoes:
+            e.remover_associativas()
+            f.remover_associativas()
+            e.generate_sort_keys()
+            f.generate_sort_keys()
+            self.assertEqual(e == f, equal, "%s == %s  ==>  %s" % (str(e), str(f), not equal))
+            self.assertEqual(e.comparar_ignorando_ordem(f), comparacao, "%s .comparar_ignorando_ordem( %s )  ==>  return '%s' == '%s'" % (str(e), str(f), e.sort_key, f.sort_key))
+
+    #################################################################
     # Testes de manipulações
     #
     # Muitos dos testes abaixos exigem que a expressão seja

@@ -276,7 +276,7 @@ class Expressao(object):
         Note que:
           (A & B) == (A & B)
         porém:
-          (A & B) == (B & A)
+          (A & B) != (B & A)
         """
         return (
                 type(self) == type(other)
@@ -286,6 +286,39 @@ class Expressao(object):
 
     def __ne__(self, other):
         return not (self == other)
+
+    def generate_sort_key(self):
+        self.sort_key = "(%s)" % (self.operator_str.join(x.sort_key for x in self.children), )
+
+    def generate_sort_keys(self, recursive=True):
+        if recursive:
+            for e in self.children:
+                e.generate_sort_keys(recursive=recursive)
+
+        backup = self.children
+        self.children = sorted(self.children, key=lambda x: x.sort_key)
+        self.generate_sort_key()
+        self.children = backup
+
+    def comparar_ignorando_ordem(self, other):
+        """Compara se duas expressões são iguais, através da comparação da
+        árvore das duas expressões. A ordem dos operandos será ignorada.
+
+        É necessário chamar .generate_sort_keys() antes de realizar a
+        comparação, caso contrário os resultados são indeterminados.
+
+        >>> A = ExpressaoSimbolo('A')
+        >>> B = ExpressaoSimbolo('B')
+        >>> e = A & B
+        >>> f = B & A
+        >>> e == f
+        False
+        >>> e.generate_sort_keys()
+        >>> f.generate_sort_keys()
+        >>> e.comparar_ignorando_ordem(f)
+        True
+        """
+        return self.sort_key == other.sort_key
 
     def simbolos(self):
         """Retorna um set() com os símbolos proposicionais presentes nesta expressão."""
@@ -508,6 +541,9 @@ class ExpressaoSimbolo(Expressao):
                 self.name == other.name
             )
 
+    def generate_sort_keys(self, recursive=True):
+        self.sort_key = self.name
+
     def simbolos(self):
         return set(self.name)
 
@@ -520,7 +556,7 @@ class ExpressaoNot(Expressao):
     """Representa o operador NOT"""
 
     is_not = True
-    tperador_str = "~ "
+    operator_str = ""
 
     def __init__(self, child):
         #super(ExpressaoNot, self).__init__()
@@ -529,6 +565,9 @@ class ExpressaoNot(Expressao):
     def __str__(self):
         return "~ %s" % (str(self.children[0]), )
         #return "(~ %s)" % (str(self.children[0]), )
+
+    def generate_sort_key(self):
+        self.sort_key = "(~ %s)" % (self.children[0].sort_key, )
 
     def eval(self, valores):
         return ~ self.children[0].eval(valores)
