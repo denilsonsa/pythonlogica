@@ -8,7 +8,31 @@ Módulo prático com utilitários para resolução de exercícios do curso de L�
 do DCC/UFRJ.
 
 Modo de uso:
- from logica import *
+$ ipython
+>>> from logica import *
+>>>
+>>> import string
+>>> criar_simbolos_no_namespace(string.uppercase, globals())
+>>>
+>>> # As duas linhas acima sao equivalentes a:
+>>> # criar_simbolos_no_namespace("ABCDEFGHIJKLMNOPQRSTUVWXYZ", globals())
+>>>
+>>> e = A & B
+>>> str(e)
+'(A & B)'
+>>> repr(e)
+"ExpressaoAnd(ExpressaoSimbolo('A'), ExpressaoSimbolo('B'))"
+>>> e.eval({'A': Verdadeiro, 'B': Falso})
+Falso
+>>>
+>>> e = Expressao( (A & ~B) | (B & ~A) )
+>>> str(e)
+'(((A & (~ B)) | (B & (~ A))))'
+>>> repr(e)
+"Expressao(ExpressaoOr(ExpressaoAnd(ExpressaoSimbolo('A'), ExpressaoNot(ExpressaoSimbolo('B'))), ExpressaoAnd(ExpressaoSimbolo('B'), ExpressaoNot(ExpressaoSimbolo('A')))))"
+>>> e.transformar_em_forma_normal_conjuntiva()
+>>> str(e)
+'(((A | B) & (A | (~ A)) & ((~ B) | B) & ((~ B) | (~ A))))'
 """
 
 
@@ -202,6 +226,13 @@ class Expressao(object):
 
     def __str__(self):
         return "(%s)" % (self.operator_str.join(str(x) for x in self.children), )
+
+    #TODO: criar uma função que retorna uma string, porém sem parênteses
+    # desnecessários, como ocorre com __str__()
+    # Exemplo:
+    #   ((A | B) & (A | ~ A) & (~ B | B) & (~ B | ~ A))
+    #   em vez disso:
+    #   ((A | B) & (A | (~ A)) & ((~ B) | B) & ((~ B) | (~ A)))
 
     def __and__(self, other):
         # This is the bitwise & operator
@@ -423,6 +454,11 @@ class Expressao(object):
         self.interiorizar_negacao()
         self.interiorizar_or()
         self.remover_associativas()
+
+    # TODO: implementar isto
+    def remover_operacoes_vazias(self):
+        """TODO: MUST IMPLEMENT THIS"""
+        pass
 
 
 

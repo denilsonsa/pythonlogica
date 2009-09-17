@@ -363,6 +363,10 @@ class TestarExpressoes(unittest.TestCase):
                 A | B | (X & (J | K) & Y) | C ,
                 (A | B | X | C) & (A | B | J | K | C) & (A | B | Y | C)
             ),
+            (  # Fórmula do XOR
+                (A | B) & ~(A & B) ,
+                (A | B) & (~A | ~B)
+            ),
         )
         for antes, depois in expressoes:
             e = Expressao(antes)
@@ -374,6 +378,8 @@ class TestarExpressoes(unittest.TestCase):
 # TODO:
 #  * Testar transformar_em_forma_normal_conjuntiva() com expressões com
 #    operador implica.
+#  * Criar funcao "remover tautologias" e "remover contradicoes" e "remover
+#    operadores vazios" (ou seja, sem operandos)
 #  * Possível expressão para usar em testes:
 #    Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
 
@@ -559,3 +565,8 @@ if __name__ == '__main__':
     sys.stderr.write("Running CRITICAL tests:\n")
     suite = unittest.TestLoader().loadTestsFromTestCase(TestarExpressoes)
     unittest.TextTestRunner(verbosity=1).run(suite)
+
+    # Also running doctest:
+    import doctest
+    import logica
+    doctest.testmod(logica)
