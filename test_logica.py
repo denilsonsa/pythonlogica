@@ -541,7 +541,6 @@ class TestarExpressoes(unittest.TestCase):
 #  * Testar transformar_em_forma_normal_conjuntiva() com expressões com
 #    operador implica.
 #  * Criar funcao "remover tautologias" e "remover contradicoes"
-#    operadores vazios" (ou seja, sem operandos)
 #  * Possível expressão para usar em testes:
 #    Manipular XOR: (~A & B) | (A & ~B)  <==> (A | B) & ~(A & B)
 

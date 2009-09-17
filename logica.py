@@ -287,18 +287,17 @@ class Expressao(object):
     def __ne__(self, other):
         return not (self == other)
 
-    def generate_sort_key(self):
-        self.sort_key = "(%s)" % (self.operator_str.join(x.sort_key for x in self.children), )
+    def generate_sort_key(self, sorted_list):
+        self.sort_key = "(%s)" % (self.operator_str.join(x.sort_key for x in sorted_list), )
 
     def generate_sort_keys(self, recursive=True):
         if recursive:
             for e in self.children:
                 e.generate_sort_keys(recursive=recursive)
 
-        backup = self.children
-        self.children = sorted(self.children, key=lambda x: x.sort_key)
-        self.generate_sort_key()
-        self.children = backup
+        self.generate_sort_key(
+            sorted(self.children, key=lambda x: x.sort_key)
+        )
 
     def comparar_ignorando_ordem(self, other):
         """Compara se duas expressões são iguais, através da comparação da
@@ -566,8 +565,8 @@ class ExpressaoNot(Expressao):
         return "~ %s" % (str(self.children[0]), )
         #return "(~ %s)" % (str(self.children[0]), )
 
-    def generate_sort_key(self):
-        self.sort_key = "(~ %s)" % (self.children[0].sort_key, )
+    def generate_sort_key(self, sorted_list):
+        self.sort_key = "(~ %s)" % (sorted_list[0].sort_key, )
 
     def eval(self, valores):
         return ~ self.children[0].eval(valores)
