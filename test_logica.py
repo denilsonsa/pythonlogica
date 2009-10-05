@@ -7,6 +7,10 @@ import string
 import sys
 from logica import *
 
+# Este arquivo executa dois tipos de teste:
+# * testes unitários, usando o módulo 'unittest'
+# * testes de documentação, usando o módulo 'doctest'
+
 
 class TestarExpressoes(unittest.TestCase):
     def setUp(self):
