@@ -7,15 +7,93 @@
 Módulo prático com utilitários para resolução de exercícios do curso de Lógica
 do DCC/UFRJ.
 
+Operadores:
+    AND:      A & B
+    OR:       A | B
+    implica:  A > B
+    NOT:      ~ A
+Cuidado com a precedência dos operadores!
+O único operador com precedência "intuitiva" é o NOT.
+Com exceção do NOT, coloque parênteses em todos os outros operadores.
+
 Modo de uso:
+
+== Exemplos de uso do calculador de tabela verdade ==
+
 $ ipython
 >>> from logica import *
+>>>
+>>> ### Exemplo 1 ###
+>>>
+>>> f = Formula(lambda A,B,C: ((~A & (A|B)) > B), 3)
+>>>
+>>> f.expr  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+<function <lambda> at ...>
+>>> f.nvars
+3
+>>> f.tautologia()
+Verdadeiro
+>>> f.contradicao()
+Falso
+>>> f.tbverdade  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+[Verdadeiro, ... Verdadeiro]
+>>>
+>>> ### Exemplo 2 ###
+>>>
+>>> f1 = Formula(lambda A: A & ~A, 1)
+>>> f1.tbverdade
+[Falso, Falso]
+>>> f1.tautologia()
+Falso
+>>> f1.contradicao()
+Verdadeiro
+>>>
+>>> ### Exemplo 3 ###
+>>>
+>>> f2 = Formula(lambda A: A | ~A, 1)
+>>> f2.tbverdade
+[Verdadeiro, Verdadeiro]
+>>> f2.tautologia()
+Verdadeiro
+>>> f2.contradicao()
+Falso
+>>>
+>>> ### Exemplo 4 ###
+>>>
+>>> g = Formula(lambda A,B,C: ~(A & B & ~C), 3)
+>>> h = Formula(lambda A,B,C: (~A | ~B | C), 3)
+>>> g.tautologia()
+Falso
+>>> h.tautologia()
+Falso
+>>> g.contradicao()
+Falso
+>>> h.contradicao()
+Falso
+>>> # Comparação de duas fórmulas através da comparação da tabela verdade:
+>>> g == h
+Verdadeiro
+>>>
+
+== Exemplo de uso do manipulador de Expressões ==
+
+$ ipython
+>>> from logica import *
+>>>
+>>> # Criando rapidamente variáveis A, B, ... no escopo global
+>>> # Seria equivalente a escrever, para cada letra:
+>>> #   A = ExpressaoSimbolo("A")
 >>>
 >>> import string
 >>> criar_simbolos_no_namespace(string.uppercase, globals())
 >>>
 >>> # As duas linhas acima sao equivalentes a:
 >>> # criar_simbolos_no_namespace("ABCDEFGHIJKLMNOPQRSTUVWXYZ", globals())
+>>>
+>>> str(A)
+'A'
+>>> repr(A)
+"ExpressaoSimbolo('A')"
 >>>
 >>> e = A & B
 >>> str(e)
@@ -38,6 +116,7 @@ Falso
 >>> e.transformar_em_forma_normal_conjuntiva()
 >>> str(e)
 '(((A | B) & (A | ~ A) & (~ B | B) & (~ B | ~ A)))'
+>>>
 """
 
 
