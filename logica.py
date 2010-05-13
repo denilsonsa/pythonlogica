@@ -212,7 +212,8 @@ class Booleano(int):
         É equivalente a (not A or B).
         """
         return ~ self or other
-        # Using "not" will return a bool() type
+        # Using "not" would return a bool() type;
+        # thus I need to use the "~" operator
         #return not self or other
 
 
