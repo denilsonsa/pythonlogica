@@ -7,6 +7,8 @@ import string
 import sys
 from logica import *
 
+ascii_uppercase = string.ascii_uppercase if sys.version_info.major >= 3 else string.uppercase
+
 # Este arquivo executa dois tipos de teste:
 # * testes unitários, usando o módulo 'unittest'
 # * testes de documentação, usando o módulo 'doctest'
@@ -16,10 +18,10 @@ class TestarExpressoes(unittest.TestCase):
     def setUp(self):
         # Ugly... Writing to globals()...
         # But it is damn handy! :)
-        criar_simbolos_no_namespace(string.uppercase, globals())
+        criar_simbolos_no_namespace(ascii_uppercase, globals())
 
     def tearDown(self):
-        for i in string.uppercase:
+        for i in ascii_uppercase:
             del globals()[i]
 
     #################################################################
@@ -655,10 +657,10 @@ class TestarExpressoesTrueFalse(unittest.TestCase):
     def setUp(self):
         # Ugly... Writing to globals()...
         # But it is damn handy! :)
-        criar_simbolos_no_namespace(string.uppercase, globals())
+        criar_simbolos_no_namespace(ascii_uppercase, globals())
 
     def tearDown(self):
-        for i in string.uppercase:
+        for i in ascii_uppercase:
             del globals()[i]
 
     def test_eval_simbolo(self):

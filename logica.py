@@ -85,7 +85,10 @@ $ ipython
 >>> #   A = ExpressaoSimbolo("A")
 >>>
 >>> import string
->>> criar_simbolos_no_namespace(string.uppercase, globals())
+>>> import sys
+>>> ascii_uppercase = string.ascii_uppercase if sys.version_info.major >= 3 else string.uppercase
+>>>
+>>> criar_simbolos_no_namespace(ascii_uppercase, globals())
 >>>
 >>> # As duas linhas acima sao equivalentes a:
 >>> # criar_simbolos_no_namespace("ABCDEFGHIJKLMNOPQRSTUVWXYZ", globals())
@@ -120,7 +123,10 @@ Falso
 """
 
 
-#import foobar
+import sys
+
+if sys.version_info.major >= 3:
+    from functools import reduce
 
 
 # You can use "from logica import *"
