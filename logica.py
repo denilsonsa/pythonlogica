@@ -239,19 +239,34 @@ class Formula(object):
     * Dizer se é tautologia ou contradição.
     """
 
-    def __init__(self, expr, nvars):
+    def __init__(self, expr, nvars=None):
         """Formula(expr, nvars)
 
+        Há dois tipos de parâmetros possíveis:
         expr  -> Função (normalmente um lambda)
         nvars -> Quantidade de variáveis dessa função
+
+        expr  -> Expressao
+        nvars -> None (detectado automaticamente)
         """
-        self.expr = expr
-        self.nvars = nvars
+        if isinstance(expr, Expressao):
+            assert nvars is None
+
+            # Convertendo de set para lista.
+            simbolos = sorted(expr.simbolos())
+
+            self.nvars = len(simbolos)
+            self.expr = lambda *args: expr.eval(dict(zip(simbolos, args)))
+        else:
+            assert isinstance(nvars, int)
+            self.nvars = nvars
+            self.expr = expr
+
         self.tbverdade = []
 
         # Just to prevent out-of-memory and too long operations.
         # This limit can be raised if needed.
-        assert nvars < 16
+        assert self.nvars < 16
 
         self.calcular_tabela_verdade()
 
@@ -415,6 +430,10 @@ class Expressao(object):
     def eval(self, valores):
         """Avalia a expressão, retornando o valor da expressão dados os valores dos símbolos passados."""
         return self.children[0].eval(valores)
+
+    def formula(self):
+        """Retorna uma Formula() baseada nesta Expressao."""
+        return Formula(self)
 
     def remover_associativas(self, recursive=True):
         """Remove as operações associativas, transformando uma sequência de
